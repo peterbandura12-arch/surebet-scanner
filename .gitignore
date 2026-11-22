@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.db
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Env & secrets
+.env
+.env.local
+
+# Tooling
+.ruff_cache/
+.pytest_cache/

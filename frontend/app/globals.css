@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #090b10;
+  --color-surface: #0d1017;
+  --color-raised: #12161f;
+  --color-hover: #171c26;
+  --color-line: #1b2029;
+  --color-accent: #3ddc97;
+  --color-accent-dim: #16352a;
+  --color-risk: #f0655a;
+  --color-risk-dim: #3a1d1b;
+  --color-warn: #e2b93b;
+  --color-muted: #6b7383;
+  --color-dim: #9aa3b2;
+  --color-bright: #e8ecf3;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: var(--color-bright);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "tnum";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(61, 220, 151, 0.25);
+}
+
+/* Subtle scrollbars, terminal style */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #242b38 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #242b38;
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+input,
+select,
+textarea {
+  color-scheme: dark;
+}
+
+.tabular {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
