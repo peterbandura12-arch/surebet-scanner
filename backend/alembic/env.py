@@ -12,7 +12,7 @@ if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
 from app.config import get_settings  # noqa: E402
-from app.db import Base  # noqa: E402
+from app.db import Base, _normalize_url  # noqa: E402
 import app.models  # noqa: F401,E402  ensures all tables are registered
 
 config = context.config
@@ -20,7 +20,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-database_url = os.environ.get("DATABASE_URL") or get_settings().database_url
+database_url = _normalize_url(
+    os.environ.get("DATABASE_URL") or get_settings().database_url
+)
 config.set_main_option("sqlalchemy.url", database_url)
 
 target_metadata = Base.metadata

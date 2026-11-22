@@ -14,9 +14,17 @@ class Base(DeclarativeBase):
     pass
 
 
+def _normalize_url(url: str) -> str:
+    # Render/Railway/Heroku style URLs -> SQLAlchemy 2 (+psycopg3) dialect
+    for legacy in ("postgres://", "postgresql://"):
+        if url.startswith(legacy):
+            return url.replace(legacy, "postgresql+psycopg://", 1)
+    return url
+
+
 def _make_engine():
     s = get_settings()
-    url = s.database_url
+    url = _normalize_url(s.database_url)
     kwargs: dict = {"pool_pre_ping": True}
     if url.startswith("sqlite"):
         kwargs["connect_args"] = {"check_same_thread": False, "timeout": 30}
