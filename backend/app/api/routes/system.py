@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import json
 import time
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -106,11 +107,15 @@ def get_settings_route(db: Session = Depends(get_db)):
 
 
 @router.put("/settings", dependencies=[Depends(rate_limit())])
-def update_setting(key: str, value: list | dict | str | int | float,
+def update_setting(key: str = Query(...), value: str = Query(...),
                    db: Session = Depends(get_db)):
     setting = db.get(SystemSetting, key)
     if setting is None:
         raise HTTPException(404, "unknown setting")
-    setting.value = value
+    try:
+        parsed = json.loads(value)
+        setting.value = parsed if isinstance(parsed, (dict, list, str, int, float, bool)) else value
+    except (ValueError, TypeError):
+        setting.value = value
     db.commit()
     return {"key": key, "value": setting.value}

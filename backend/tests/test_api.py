@@ -61,6 +61,28 @@ class TestSystem:
     def test_settings_roundtrip(self, client):
         r = client.get("/api/settings")
         assert r.status_code == 200
+        keys = list(r.json())
+        assert keys, "seeded settings must exist"
+
+    def test_settings_update_via_query_params(self, client):
+        keys = list(client.get("/api/settings").json())
+        key = keys[0]
+        r = client.put(f"/api/settings?key={key}&value=2.5",
+                       headers={"content-type": "application/json"})
+        assert r.status_code == 200
+        assert r.json()["key"] == key
+        assert client.get("/api/settings").json()[key]["value"] == 2.5
+
+    def test_settings_update_keeps_text_as_string(self, client):
+        keys = list(client.get("/api/settings").json())
+        key = keys[0]
+        r = client.put(f"/api/settings?key={key}&value=abc", headers={})
+        assert r.status_code == 200
+        assert client.get("/api/settings").json()[key]["value"] == "abc"
+
+    def test_settings_update_unknown_key(self, client):
+        r = client.put("/api/settings?key=n_a&value=1")
+        assert r.status_code == 404
 
 
 class TestDashboardAndAnalytics:
