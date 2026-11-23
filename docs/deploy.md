@@ -55,3 +55,11 @@ latest commit** (alebo len Save, Render redeployne automaticky pri zmene env).
   sekúnd je normálnych.
 - **Vidím len DEMO MODE badge** — to je správne, celá platforma funguje výhradne
   na simulovaných dátach.
+
+## Ďalší krok — reálne dáta
+
+Aplikácia zatiaľ beží na dátach z demo generátora. Ak chceš pripojiť aj
+reálne kurzy, postupuj podľa [going-live.md](going-live.md): získaš si
+kľúč od The Odds API a vložíš ho v Render → Environment ako
+`THEODDSAPI_KEY`. Nič viac netreba nastavovať — reálne a demo dáta sa
+nikdy nemiešajú, každý záznam je označený podľa svojho zdroja.

@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     theoddsapi_key: str = ""
     theoddsapi_region: str = "eu"
     theoddsapi_sport: str = "soccer_epl"
+    # Comma-separated list of The Odds API sport keys pulled each tick.
+    theoddsapi_sports: str = "soccer_epl"
+    # Markets to request from The Odds API (each costs quota per request).
+    theoddsapi_markets: str = "h2h"
+    # Seconds between full real-provider pulls (quota protection).
+    theoddsapi_min_interval_seconds: int = 60
 
     @property
     def cors_origin_list(self) -> list[str]:

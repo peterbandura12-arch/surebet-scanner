@@ -35,6 +35,12 @@ services:
         sync: false # set to your frontend URL, e.g. https://surebet-scanner.vercel.app
       - key: THEODDSAPI_KEY
         sync: false # optional; leave empty for pure demo mode
+      - key: THEODDSAPI_SPORTS
+        value: soccer_epl
+      - key: THEODDSAPI_MARKETS
+        value: h2h,spreads,totals
+      - key: THEODDSAPI_MIN_INTERVAL_SECONDS
+        value: "60"
 
   - type: web
     name: surebet-frontend

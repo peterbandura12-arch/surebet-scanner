@@ -116,7 +116,8 @@ def scan_events(session: Session, min_roi: float | None = None,
         event = event_map.get(event_id)
         if event is None:
             continue
-        mdef = mc.get_market(market_key, event.sport_key)
+        mdef = (mc.get_market(market_key, event.sport_key)
+                or mc.ensure_market(event.sport_key, market_key))
         if mdef is None:
             continue
         if set(outcome_map.keys()) != set(mdef.outcomes):
@@ -171,7 +172,8 @@ def persist_scan(session: Session, min_roi: float | None = None,
             continue
         key = (f.event.id, f.market_key)
         seen_keys.add(key)
-        mdef = mc.get_market(f.market_key, f.event.sport_key)
+        mdef = (mc.get_market(f.market_key, f.event.sport_key)
+                or mc.ensure_market(f.event.sport_key, f.market_key))
         legs = [
             {
                 "outcome": o,

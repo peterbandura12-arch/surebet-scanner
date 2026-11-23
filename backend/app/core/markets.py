@@ -129,6 +129,36 @@ SPORTS: dict[str, dict] = {
 }
 
 
+def ensure_market(sport: str, key: str, category: str = "") -> MarketDef | None:
+    """Return the market for (sport, key); for totals/handicap line keys not in
+    the static catalog (arbitrary lines from real providers), register a
+    definition on the fly. Line-bearing keys are self-consistent, so two
+    different lines still can never be compared with each other. Returns None
+    for keys that cannot be safely interpreted."""
+    existing = MARKETS.get((sport, key))
+    if existing is not None:
+        return existing
+    if key.startswith("ou_"):
+        try:
+            line = float(key[3:])
+        except ValueError:
+            return None
+        m = _mk(key, f"Over/Under {line:g}", sport, "totals", (O, U),
+                f"Total line {line:g}.", line)
+        MARKETS[(sport, key)] = m
+        return m
+    if key.startswith(("ah_", "sp_")) and category in ("handicap", "totals", ""):
+        try:
+            line = float(key.split("_", 1)[1])
+        except ValueError:
+            return None
+        m = _mk(key, f"Handicap {line:+.1f}", sport, "handicap", (H, A),
+                f"Line {line:+.1f}.", line)
+        MARKETS[(sport, key)] = m
+        return m
+    return None
+
+
 def get_market(key: str, sport: str) -> MarketDef | None:
     """Resolve a market key *within the given sport*; keys are sport-scoped so
     'h2h' resolves to the 3-way 1X2 for football but the 2-way moneyline for

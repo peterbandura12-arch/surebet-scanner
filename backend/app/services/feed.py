@@ -8,6 +8,7 @@ engine in app/core/matching.py. Odds rows are append-only snapshots.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import timedelta
 
 from sqlalchemy import select
@@ -15,7 +16,8 @@ from sqlalchemy.orm import Session
 
 from app.core import matching
 from app.core.normalize import canonical_participant
-from app.models import (Event, EventMatch, Odds, Team, League)
+from app.models import (Event, EventMatch, DataSource, Odds, Team, League,
+                        utcnow)
 from app.services.providers.demo import DemoOddsProvider
 from app.services.providers.base import OddsProvider, ProviderEvent, PullResult
 
@@ -182,29 +184,64 @@ def store_odds(session: Session, provider_event: ProviderEvent,
 
 class FeedManager:
     def __init__(self, providers: list[OddsProvider] | None = None):
-        s_seed = __import__("app.config", fromlist=["get_settings"]).get_settings()
+        from app.config import get_settings
+        s = get_settings()
         self.providers = providers or [
-            DemoOddsProvider(seed=s_seed.demo_seed, feed_name="demo-a"),
-            DemoOddsProvider(seed=s_seed.demo_seed, feed_name="demo-b"),
+            DemoOddsProvider(seed=s.demo_seed, feed_name="demo-a"),
+            DemoOddsProvider(seed=s.demo_seed, feed_name="demo-b"),
         ]
+        self._real_providers_cache: list[OddsProvider] = []
+        self._real_provider_last_tick = 0.0
+
+    def ensure_real_providers(self) -> list[OddsProvider]:
+        """Append configured real providers (e.g. The Odds API) if not present."""
+        if self._real_providers_cache:
+            return self._real_providers_cache
+        try:
+            from app.services.providers.theoddsapi import TheOddsApiProvider
+            self._real_providers_cache.append(TheOddsApiProvider())
+            log.info("real provider enabled: theoddsapi (sports=%s)",
+                     self._real_providers_cache[0].sports)
+        except Exception as exc:
+            log.debug("real provider not enabled: %s", exc)
+        return self._real_providers_cache
 
     def tick(self, session: Session) -> dict:
         """Pull every provider, persist events/odds/matches. Returns a summary."""
+        from app.config import get_settings
+        s = get_settings()
         summary = {"providers": {}, "events": 0, "odds_rows": 0, "matches": [],
                    "warnings": []}
-        for provider in self.providers:
+        all_providers = self.providers + self.ensure_real_providers()
+        now = time.time()
+        for provider in all_providers:
+            if not provider.is_simulated:
+                # Real API: protect the paid quota with a dedicated interval.
+                if now - self._real_provider_last_tick < \
+                        s.theoddsapi_min_interval_seconds:
+                    summary["providers"][provider.key] = {
+                        "skipped": "quota_interval"}
+                    continue
             try:
                 result: PullResult = provider.pull()
+                if not provider.is_simulated:
+                    self._real_provider_last_tick = time.time()
             except Exception as exc:  # provider outage must not kill the feed
                 log.exception("provider %s failed", provider.key)
                 summary["warnings"].append(f"{provider.key}: {exc}")
+                self._record_source_status(session, provider.key,
+                                           f"error: {exc}")
                 continue
             summary["providers"][provider.key] = {"events": len(result.events),
                                                   "simulated": result.is_simulated}
+            self._record_source_status(
+                session, provider.key,
+                "; ".join(result.warnings) if result.warnings else "")
             for pe in result.events:
                 if pe.start_time is None:
                     continue
-                if provider.key in ("demo-a", "demo") or pe.provider == "demo":
+                primary = provider.key in ("demo-a", "demo") or not provider.is_simulated
+                if primary:
                     ev = upsert_canonical_event(session, pe)
                     summary["events"] += 1
                 else:
@@ -213,3 +250,12 @@ class FeedManager:
                 summary["odds_rows"] += store_odds(session, pe, ev.id if ev else None)
         summary["odds_rows"] = summary["odds_rows"]
         return summary
+
+    @staticmethod
+    def _record_source_status(session: Session, provider_key: str,
+                              error: str) -> None:
+        src = session.get(DataSource, provider_key)
+        if src is None:
+            return
+        src.last_sync_at = utcnow()
+        src.last_error = error or ""
