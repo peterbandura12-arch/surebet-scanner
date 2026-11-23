@@ -56,6 +56,31 @@ latest commit** (alebo len Save, Render redeployne automaticky pri zmene env).
 - **Vidím len DEMO MODE badge** — to je správne, celá platforma funguje výhradne
   na simulovaných dátach.
 
+## Nahradiť Render databázu Supabase (odporúčané)
+
+Render free Postgres vyprší po 30 dňoch. Trvalú free alternatívu dá Supabase:
+
+1. Na [supabase.com](https://supabase.com) si vytvor účet (aj cez GitHub) a
+   stlač **New project**. Pri tvorbe si vymysli a zapamätaj si heslo
+   databázy (Save it well).
+2. Keď bude projekt hotový: **Project Settings → Database → Connection
+   string → URI** a prepnúť na **Session pooler** (port 5432). Bude to vyzerať
+   približne takto:
+
+   ```
+   postgresql://postgres.REFERENCIA:[TVOJE-HESLO]@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
+   ```
+
+3. Nahrádza `[TVOJE-HESLO]` za heslo, ktoré ste si zvolili (bez zátvoriek).
+   Ak heslo obsahuje zvláštne znaky, najlepšie si vyber heslo len s písmenami
+   a číslami.
+4. V Renderi → služba **surebet-api → Environment** uprav premennú
+   `DATABASE_URL` na tento reťazec → **Save changes**. Render reštartuje a
+   pri štarte sám vytvorí tabuľky (`alembic upgrade head`).
+
+Poznámka: použi **Session pooler** (port 5432), nie „Direct connection" —
+priama adresa je len IPv6, ktorú Render nepodporuje.
+
 ## Ďalší krok — reálne dáta
 
 Aplikácia zatiaľ beží na dátach z demo generátora. Ak chceš pripojiť aj
