@@ -96,6 +96,7 @@ print(r.is_arbitrage, round(r.roi_pct, 2), [l.stake for l in r.legs])
 
 - [docs/architecture.md](docs/architecture.md) — modules, data flow, matching, DB model
 - [docs/running.md](docs/running.md) — detailed run/deploy configuration
+- [docs/deploy.md](docs/deploy.md) — free hosting on Render + Vercel (click-only, phone-friendly)
 - [docs/limitations.md](docs/limitations.md) — demo boundaries & safety rules
 
 ## Safety
